@@ -62,6 +62,8 @@ services:
       dockerfile: infra/web/Dockerfile
     container_name: ecsite_web
     restart: unless-stopped
+    volumes:
+      - ./infra/web/ssl:/etc/nginx/ssl:ro
     ports:
       - "80:80"
       - "443:443"
