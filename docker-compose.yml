@@ -1,0 +1,72 @@
+volumes:
+  ecsite_data_mysql:
+    name: ${VOLUME}/mysql
+  ecsite_data_mysql_log:
+    name: ${VOLUME}/mysql_log
+
+networks:
+  ecsite_network:
+    driver: bridge
+
+services:
+  mysql:
+    container_name: ecsite_mysql
+    build:
+      context: .
+      dockerfile: ./infra/mysql/Dockerfile
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - ${VOLUME}/mysql:/var/lib/mysql
+      - ${VOLUME}/mysql_log:/var/log/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - ecsite_network
+
+  php-fpm:
+    build:
+      context: .
+      dockerfile: infra/php/Dockerfile
+    container_name: ecsite_php
+    restart: unless-stopped
+    volumes:
+      - ./be:/var/www/html
+      - ./be/storage:/var/www/html/storage
+    depends_on:
+      - mysql
+    networks:
+      - ecsite_network
+
+  next:
+    build:
+      context: .
+      dockerfile: infra/next/Dockerfile
+    container_name: ecsite_next
+    restart: unless-stopped
+    volumes:
+      - ./fe:/app
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+    networks:
+      - ecsite_network
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/web/Dockerfile
+    container_name: ecsite_web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - php-fpm
+      - next
+    networks:
+      - ecsite_network
