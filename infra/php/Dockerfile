@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libzip-dev \
+    supervisor \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -24,4 +25,10 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/bootstrap/cache \
     && chmod +x artisan
 
-CMD ["php-fpm"] 
+# Supervisor設定ファイルをコピー
+COPY infra/php/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Supervisorログディレクトリを作成
+RUN mkdir -p /var/log/supervisor
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"] 
