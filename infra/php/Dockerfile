@@ -25,6 +25,9 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/bootstrap/cache \
     && chmod +x artisan
 
+# カスタムphp.iniをコピー
+COPY infra/php/php.ini /usr/local/etc/php/conf.d/custom.ini
+
 # Supervisor設定ファイルをコピー
 COPY infra/php/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
